@@ -1,11 +1,14 @@
 name: simple_package
 description: "A new Flutter project."
 version: 0.0.1
-homepage: "https://github.com/jinhan38/build_runner_sample"
+homepage: "https://github.com/jinhan38/simple_package"
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
   flutter: ">=1.17.0"
+
+executables:
+  simple_generate: simple_generate
 
 dependencies:
   flutter:

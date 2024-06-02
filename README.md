@@ -4,5 +4,5 @@ Simple generation package
 
 ## Usage
 
-dart run simple_package
+dart run simple_generate
 
