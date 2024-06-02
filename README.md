@@ -4,5 +4,8 @@ Simple generation package
 
 ## Usage
 
-dart run simple_generate
+Enter the following two lines into the terminal in turn
+
+$ flutter pub global activate simple_package
+$ simple_generate
 
