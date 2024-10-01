@@ -8,6 +8,10 @@ void main() {
   createUtil();
   createWidgets();
   createDialog();
+  createBottomSheet();
+  createViewModel();
+  createApi();
+  createController();
 }
 
 void createRoutePage() {
@@ -27,24 +31,51 @@ void createUtil() {
   createFile("lib/util/my_color.dart", myColor);
   createFile("lib/util/text_util.dart", textUtil);
   createFile("lib/util/custom_scroll_behavior.dart", customScrollBehavior);
-  createFile("lib/util/my_validation.dart", myValidation);
+  createFile("lib/util/my_validation.dart.dart", myValidation);
+  createFile("lib/util/date_util.dart", dateUtil);
+  createFile("lib/util/error_util.dart", errorUtil);
+  createFile("lib/util/keyboard_util.dart", keyboardUtil);
+  createFile("lib/util/loading.dart", loading);
+  createFile("lib/util/logging.dart", logging);
 }
 
 void createWidgets() {
   createDirectory("lib/widgets");
-  createFile(
-      "lib/widgets/custom_keyboard_listener.dart", customKeyboardListener);
+  createFile("lib/widgets/custom_keyboard_listener.dart", customKeyboardListener);
   createFile("lib/widgets/custom_text_button.dart", customTextButton);
   createFile("lib/widgets/custom_text_form_field.dart", customTextFormField);
   createFile("lib/widgets/screen_layout_builder.dart", screenLayoutBuilder);
   createFile("lib/widgets/custom_constraints.dart", customConstraints);
   createFile("lib/widgets/custom_dropdown_button.dart", customDropdownButton);
   createFile("lib/widgets/custom_gradient_text.dart", customGradientText);
+  createFile("lib/widgets/my_divider.dart", myDivider);
+  createFile("lib/widgets/image_widget.dart", imageWidget);
 }
 
 void createDialog() {
   createDirectory("lib/dialog");
   createFile("lib/dialog/ok_dialog.dart", okDialog);
+}
+
+void createBottomSheet() {
+  createDirectory("lib/bottom_sheet");
+  createFile("lib/bottom_sheet/ok_bottom_sheet.dart", okBottomSheet);
+}
+
+void createViewModel() {
+  createDirectory("lib/view_model");
+  createFile("lib/view_model/home_view_model.dart", homeViewModel);
+}
+
+void createApi() {
+  createDirectory("lib/api");
+  createFile("lib/api/base_api.dart", baseApi);
+  createFile("lib/api/common_api.dart", commonApi);
+}
+
+void createController() {
+  createDirectory("lib/controller");
+  createFile("lib/controller/common_controller.dart", commonController);
 }
 
 void createDirectory(String path) {
@@ -71,13 +102,42 @@ var routePage = '''
 import 'package:flutter/material.dart';
 
 class RoutePage {
-  static const intro = '/';
-
-  static movePage(BuildContext context, String routeName, {dynamic data}) {
+  /// 페이지 이동
+  static void move(
+    BuildContext context,
+    String pageName, {
+    dynamic arguments,
+    Function(dynamic value)? callback,
+  }) {
+    Navigator.of(context).pushNamed(pageName, arguments: arguments).then((value) {
+      callback?.call(value);
+    });
   }
 
-  static backPage(BuildContext context, {dynamic data}) {
+  /// 현재 페이지를 새로운 페이지로 교환
+  static void moveAndReplace(
+    BuildContext context,
+    String pageName, {
+    dynamic arguments,
+    Function(dynamic value)? callback,
+  }) {
+    Navigator.of(context).pushReplacementNamed(pageName, arguments: arguments).then((value) {
+      callback?.call(value);
+    });
   }
+
+  /// 특정 페이지까지 되돌아가기
+  static void popUntil(BuildContext context, String pageName) {
+    Navigator.of(context).popUntil(
+      (route) => route.settings.name.toString() == pageName,
+    );
+  }
+
+  static const splash = '/splash';
+
+  static Map<String, WidgetBuilder> routeList = {
+    RoutePage.splash: (_) => const Scaffold(),
+  };
 }
 ''';
 
@@ -669,6 +729,708 @@ class OkDialog {
           ),
         );
       },
+    );
+  }
+}
+''';
+
+var okBottomSheet = '''
+import 'package:flutter/material.dart';
+
+class OkBottomSheet {
+  static void show({
+    required BuildContext context,
+    required String message,
+    required String buttonText,
+    required VoidCallback onClick,
+    VoidCallback? then,
+    VoidCallback? closed,
+  }) {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) {
+        return ClipRRect(
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(15),
+            topRight: Radius.circular(15),
+          ),
+          child: Container(
+            color: Colors.white,
+            width: double.infinity,
+            height: 266,
+            child: const SizedBox(),
+          ),
+        );
+      },
+    ).then((value) {
+      then?.call();
+      Future.delayed(
+        const Duration(milliseconds: 200),
+        () {
+          closed?.call();
+        },
+      );
+    });
+  }
+}
+''';
+
+var dateUtil = '''
+import 'package:intl/intl.dart';
+
+class DateUtil{
+
+  static DateTime changeFromEpochToDateTime(int time) {
+    return DateTime.fromMillisecondsSinceEpoch(time);
+  }
+
+
+  /// yyyy.MM.dd 형태로 파싱
+  static String yyyyMMddDateFromDateTime(DateTime time) {
+    return DateFormat('yyyy.MM.dd').format(time);
+  }
+
+  /// yyyy.MM.dd 형태로 파싱
+  static String yyyyMMddDateFromMilliSec(int time) {
+    return DateFormat('yyyy.MM.dd').format(changeFromEpochToDateTime(time));
+  }
+
+  /// yyyy.MM.dd HH:mm 형태로 파싱
+  static String fullDateFromMilliSec(int time) {
+    return DateFormat('yyyy.MM.dd HH:mm').format(changeFromEpochToDateTime(time));
+  }
+
+  static String changeLocalDate(DateTime dateTime){
+    return DateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS").format(dateTime);
+  }
+
+  static int getDueDateFromNow(DateTime endDate){
+    DateTime now = DateTime.now();
+    Duration difference = endDate.difference(now);
+    int dDay = difference.inDays;
+    return dDay;
+  }
+
+  /// 2024-07-26T18:08:15.458552 이러한 형태를 DateTime으로 변경
+  static DateTime parseDateTime(String time) {
+    return DateTime.parse(time);
+  }
+}
+''';
+
+var errorUtil = '''
+import 'package:flutter/widgets.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+
+class ErrorUtil {
+  static const String errorMessage = "오류가 발생했습니다. 잠시 후 다시 시도해주세요";
+  static const String noAccount = "존재하지 않는 계정입니다";
+
+  static void errorToast({String message = ErrorUtil.errorMessage}) {
+    Fluttertoast.showToast(msg: message);
+  }
+
+  static void throwError(Map<String, dynamic> e) {
+   try{
+     throw {
+       "method": e["method"],
+       "statusCode": e["statusCode"],
+       "title": e["title"],
+       "message": e["message"],
+       "url": e["url"],
+       "error": e["error"],
+     };
+   }catch(e) {
+     debugPrint(e.toString());
+   }
+  }
+}
+''';
+
+var keyboardUtil = '''
+import 'package:flutter/material.dart';
+
+class KeyboardUtil {
+  static bool open(BuildContext context) {
+    return MediaQuery.of(context).viewInsets.bottom > 0;
+  }
+}
+''';
+
+var loading = '''
+import 'package:flutter/material.dart';
+
+class Loading {
+  static BuildContext? _context;
+
+  static open({required BuildContext context, int finishSec = 5}) async {
+    if (_context != null) return;
+    _context = context;
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      barrierColor: Colors.transparent,
+      builder: (context) {
+        return Material(
+          color: Colors.black.withOpacity(0.6),
+          elevation: 0,
+          child: widget(),
+        );
+      },
+    ).timeout(Duration(seconds: finishSec), onTimeout: () async => close());
+  }
+
+  static widget() {
+    return const Center(
+      child: SizedBox(
+        width: 30,
+        height: 30,
+        child: CircularProgressIndicator(
+          strokeWidth: 4,
+          color: Colors.orange,
+        ),
+      ),
+    );
+  }
+
+  static close() {
+    if (_context == null) return;
+    if (!_context!.mounted) {
+      _context = null;
+      return;
+    }
+    Navigator.of(_context!).pop();
+    _context = null;
+  }
+
+  static animationLoading({
+    required bool loading,
+    required bool initial,
+    required Widget child,
+  }) {
+    return Stack(
+      children: [
+        Positioned.fill(
+          child: AnimatedOpacity(
+            opacity: initial && loading ? 0 : 1,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeIn,
+            child: child,
+          ),
+        ),
+        if (loading) Loading.widget(),
+      ],
+    );
+  }
+}
+''';
+
+var myDivider = '''
+import 'package:flutter/material.dart';
+
+class MyDivider extends StatelessWidget {
+  const MyDivider({this.needOverflow = true, super.key});
+
+  final bool needOverflow;
+
+  @override
+  Widget build(BuildContext context) {
+    if (needOverflow) {
+      return SizedBox(
+        width: double.infinity,
+        height: 1,
+        child: OverflowBox(
+          alignment: Alignment.center,
+          minHeight: 1,
+          maxWidth: MediaQuery.of(context).size.width,
+          child: Container(
+            width: double.infinity,
+            height: 1,
+            color: Colors.grey,
+          ), // 자식 위젯
+        ),
+      );
+    }
+    return Container(
+      width: double.infinity,
+      height: 1,
+      color: Colors.grey,
+    );
+  }
+}
+''';
+
+var homeViewModel = '''
+import 'package:flutter/material.dart';
+
+class HomeViewModel with ChangeNotifier {
+  static final HomeViewModel _singleton = HomeViewModel._();
+
+  factory HomeViewModel() {
+    return _singleton;
+  }
+
+  HomeViewModel._();
+
+  void update() => notifyListeners();
+
+  bool isDirty = false;
+}
+''';
+
+var baseApi = '''
+import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
+
+import '../utils/logging.dart';
+
+abstract class BaseApi {
+  late final Dio _dio;
+
+  BaseApi(this._dio);
+
+  final pageSize = 30;
+
+  String getHeaderToken() {
+    return _dio.options.headers["authorization"];
+  }
+
+  /// 헤더 토큰 리셋
+  void resetHeader() {
+    _dio.options.headers = null;
+  }
+
+  Map<String, dynamic> getHeader() {
+    return _dio.options.headers;
+  }
+
+  String getHeaderAuthorization() {
+    return _dio.options.headers["authorization"];
+  }
+
+  ///dio get
+  Future<Response> dioGet(String url, {Map<String, dynamic>? query}) async {
+    try {
+      Logging.logApi(
+        method: "GET",
+        header: _dio.options.headers,
+        url: url,
+        query: query,
+        body: "",
+        data: "",
+        statusCode: "",
+      );
+
+      Response response;
+      if (query == null) {
+        response = await _dio.get(url);
+      } else {
+        response = await _dio.get(url, queryParameters: query);
+      }
+
+      Logging.logApi(
+        method: "GET",
+        header: _dio.options.headers,
+        url: response.realUri,
+        query: query,
+        body: "",
+        data: response.data,
+        statusCode: response.statusCode,
+      );
+      if (response.data == null &&
+          (response.statusCode == null ||
+              (response.statusCode! < 200 && response.statusCode! >= 300))) {
+        throw Exception("data null");
+      }
+
+      return response;
+    } on DioException catch (e) {
+      throw {
+        "method": "GET",
+        "statusCode": e.response?.statusCode,
+        "title": "오류",
+        "message": e.response == null
+            ? "네트워크 연결을 확인해주세요 "
+            : e.response?.data["message"],
+        "url": url,
+        "error": e.error,
+      };
+    }
+  }
+
+  ///dio post
+  Future<Response> dioPost(String url, {required dynamic data}) async {
+    try {
+      Logging.logApi(
+        method: "POST",
+        header: _dio.options.headers,
+        url: url,
+        query: null,
+        body: data,
+        data: "",
+        statusCode: "",
+      );
+      Response response = await _dio.post(url, data: data);
+
+      Logging.logApi(
+        method: "POST",
+        header: _dio.options.headers,
+        url: response.realUri,
+        query: null,
+        body: data,
+        data: response.data,
+        statusCode: response.statusCode,
+      );
+
+      if (response.data == null &&
+          (response.statusCode == null ||
+              (response.statusCode! < 200 && response.statusCode! >= 300))) {
+        throw Exception("data null");
+      }
+      return response;
+    } on DioException catch (e) {
+      throw {
+        "method": "POST",
+        "statusCode": e.response?.statusCode,
+        "title": "오류",
+        "message": e.response == null
+            ? "네트워크 연결을 확인해주세요 "
+            : e.response?.data["message"],
+        "url": url,
+        "error": e.error,
+      };
+    }
+  }
+
+  ///dio patch
+  Future<Response> dioPatch(String url, {dynamic data}) async {
+    try {
+      debugPrint("dioPatch url : \$url, data : \$data");
+
+      Response response;
+      if (data == null) {
+        response = await _dio.patch(url);
+      } else {
+        response = await _dio.patch(url, data: data);
+      }
+
+      Logging.logApi(
+        method: "PATCH",
+        header: _dio.options.headers,
+        url: response.realUri,
+        query: null,
+        body: "",
+        data: response.data,
+        statusCode: response.statusCode,
+      );
+
+      if (response.data == null &&
+          (response.statusCode == null ||
+              (response.statusCode! < 200 && response.statusCode! >= 300))) {
+        throw Exception("data null");
+      }
+
+      return response;
+    } on DioException catch (e) {
+      throw {
+        "method": "PATCH",
+        "statusCode": e.response?.statusCode,
+        "title": "오류",
+        "message": e.response == null
+            ? "네트워크 연결을 확인해주세요 "
+            : e.response?.data["message"],
+        "url": url,
+        "error": e.error,
+      };
+    }
+  }
+
+  ///dio put
+  Future<Response> dioPut(String url, {dynamic data}) async {
+    try {
+      debugPrint("dioPut url : \$url, data : \$data");
+
+      Response response;
+      if (data == null) {
+        response = await _dio.put(url);
+      } else {
+        response = await _dio.put(url, data: data);
+      }
+
+      Logging.logApi(
+        method: "PUT",
+        header: _dio.options.headers,
+        url: response.realUri,
+        query: null,
+        body: data,
+        data: response.data,
+        statusCode: response.statusCode,
+      );
+
+      if (response.data == null &&
+          (response.statusCode == null ||
+              (response.statusCode! < 200 && response.statusCode! >= 300))) {
+        throw Exception("data null");
+      }
+
+      return response;
+    } on DioException catch (e) {
+      throw {
+        "method": "PUT",
+        "statusCode": e.response?.statusCode,
+        "title": "오류",
+        "message": e.response == null
+            ? "네트워크 연결을 확인해주세요 "
+            : e.response?.data["message"],
+        "url": url,
+        "error": e.error,
+      };
+    }
+  }
+
+  ///dio delete
+  Future<Response> dioDelete(String url, {Map<String, dynamic>? query}) async {
+    try {
+      Response response;
+      if (query == null) {
+        response = await _dio.delete(url);
+      } else {
+        response = await _dio.delete(url, queryParameters: query);
+      }
+
+      Logging.logApi(
+        method: "DELETE",
+        header: _dio.options.headers,
+        url: '\${_dio.options.baseUrl}\$url',
+        query: null,
+        body: "",
+        data: response.data,
+        statusCode: response.statusCode,
+      );
+
+      if (response.data == null &&
+          (response.statusCode == null ||
+              (response.statusCode! < 200 && response.statusCode! >= 300))) {
+        throw Exception("data null");
+      }
+
+      return response;
+    } on DioException catch (e) {
+      throw {
+        "method": "DELETE",
+        "statusCode": e.response?.statusCode,
+        "title": "오류",
+        "message": e.response == null ? "네트워크 연결을 확인해주세요 " : e.response?.data,
+        "url": url,
+        "error": e.error,
+      };
+    }
+  }
+
+  Future<void> dioDownload({
+    required String downloadUrl,
+    required String downloadDirectory,
+    required Function(int count, int total) progress,
+  }) async {
+    try {
+      debugPrint(
+          "dioDownload downloadUrl : \$downloadUrl, downloadDirectory : \$downloadDirectory");
+
+      await _dio.download(downloadUrl, downloadDirectory,
+          onReceiveProgress: (count, total) {
+        progress(count, total);
+      },
+          options: Options(
+              sendTimeout: const Duration(seconds: 5),
+              receiveTimeout: const Duration(seconds: 5)));
+    } on DioException catch (e) {
+      throw {
+        "method": "GET DOWNLOAD",
+        "statusCode": e.response?.statusCode,
+        "title": "오류",
+        "message": e.response == null ? "네트워크 연결을 확인해주세요 " : e.response?.data,
+        "url": downloadUrl,
+        "error": e.error,
+      };
+    }
+  }
+}
+''';
+
+var commonApi = '''
+import 'base_api.dart';
+
+class CommonApi extends BaseApi {
+  CommonApi(super.dio);
+}
+''';
+
+var commonController = '''
+import 'package:dio/dio.dart';
+
+import '../api/common_api.dart';
+
+class CommonController {
+  static final CommonController _singleton = CommonController._();
+
+  factory CommonController({Dio? dio}) {
+    if (dio != null) {
+      _commonApi = CommonApi(dio);
+    }
+    return _singleton;
+  }
+
+  CommonController._();
+
+  static late CommonApi _commonApi;
+}
+''';
+
+var logging = '''
+import 'package:flutter/foundation.dart';
+
+class Logging {
+  static log(dynamic message) {
+    if (!kReleaseMode) {
+      debugPrint(message);
+    }
+  }
+
+  static logApi({
+    required dynamic method,
+    required dynamic url,
+    required dynamic query,
+    required dynamic body,
+    required dynamic data,
+    required dynamic statusCode,
+    required dynamic header,
+  }) {
+    var message =
+        '\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>'
+        '\nmethod : \$method'
+        '\nurl : \$url'
+        '\nquery : \$query'
+        '\nbody : \$body'
+        '\nresponse : \$data'
+        '\nstatusCode : \$statusCode'
+        '\nheader : \$header'
+        '\n<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n';
+    if (!kReleaseMode) {
+      debugPrint(message);
+    }
+  }
+}
+''';
+
+var imageWidget = '''
+import 'dart:io';
+
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/material.dart';
+
+enum ImageHolderType { white, grey, loading, transparent }
+
+class ImageWidget {
+  
+  static Widget placeHolderGrey() => Container(color: Colors.grey.shade50);
+
+  static const Duration shortDuration = Duration(milliseconds: 50);
+
+  static const Duration middleDuration = Duration(milliseconds: 300);
+
+  static const Duration longDuration = Duration(milliseconds: 600);
+
+  ///투명한 배경 placeHolder
+  static Widget placeHolderTransparent() =>
+      Container(color: Colors.transparent);
+
+  ///하얀색 배경 placeHolder
+  static Widget placeHolderWhite() => Container(color: Colors.white);
+
+  ///로딩 placeHolder
+  static Widget placeHolderLoading() {
+    return const SizedBox(
+      width: 20,
+      height: 20,
+      child: Center(child: CircularProgressIndicator()),
+    );
+  }
+
+  static Widget getImagePlaceHolder(ImageHolderType imageHolderType) {
+    switch (imageHolderType) {
+      case ImageHolderType.grey:
+        return placeHolderGrey();
+      case ImageHolderType.white:
+        return placeHolderWhite();
+      case ImageHolderType.loading:
+        return placeHolderLoading();
+      case ImageHolderType.transparent:
+        return placeHolderTransparent();
+    }
+  }
+
+  static Widget setNetworkAndFile(String url) {
+    if (url.isEmpty) return const SizedBox();
+    if (url.contains("https")) return imageNetwork(url: url);
+    return Image.file(File(url), fit: BoxFit.cover);
+  }
+
+  static Widget imageNetwork({
+    required String url,
+    BoxFit fit = BoxFit.cover,
+    Duration duration = middleDuration,
+    Duration fadeOutDuration = middleDuration,
+    FilterQuality filterQuality = FilterQuality.medium,
+    ImageHolderType imageHolderType = ImageHolderType.white,
+  }) {
+    if (url == "null" || url.isEmpty) {
+      return const SizedBox();
+    }
+    return _mainNetworkImage(
+      url: url,
+      fit: fit,
+      duration: duration,
+      fadeOutDuration: fadeOutDuration,
+      filterQuality: filterQuality,
+      imageHolderType: imageHolderType,
+    );
+  }
+
+  static Widget _mainNetworkImage({
+    required String url,
+    required BoxFit fit,
+    required Duration duration,
+    required Duration fadeOutDuration,
+    required FilterQuality filterQuality,
+    required ImageHolderType imageHolderType,
+  }) {
+    return CachedNetworkImage(
+        fit: fit,
+        imageUrl: url,
+        fadeInCurve: Curves.ease,
+        fadeInDuration: duration,
+        fadeOutDuration: fadeOutDuration,
+        placeholder: (context, url) =>
+            Center(child: getImagePlaceHolder(imageHolderType)),
+        filterQuality: filterQuality,
+        errorWidget: (context, url, error) {
+          return Image.network(url, fit: fit, filterQuality: filterQuality,
+              errorBuilder: (context, error, stackTrace) {
+                return Image.network(url, fit: fit, filterQuality: filterQuality,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container();
+                    });
+              });
+        });
+  }
+
+  static ImageProvider imageNetworkProvider({required String url}) {
+    return CachedNetworkImageProvider(
+      url,
+      errorListener: (error) => CachedNetworkImageProvider(
+        url,
+        errorListener: (error) => Container(),
+      ),
     );
   }
 }
