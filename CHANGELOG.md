@@ -21,3 +21,9 @@ ImageWidget 추가
 
 ## 0.0.9
 model 추가 
+
+## 0.0.10
+logging 코드 수정
+
+## 0.0.11
+logging 출바꿈 변경  
