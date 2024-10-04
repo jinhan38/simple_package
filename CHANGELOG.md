@@ -18,3 +18,6 @@ edit read.me.
 
 ## 0.0.8
 ImageWidget 추가 
+
+## 0.0.9
+model 추가 

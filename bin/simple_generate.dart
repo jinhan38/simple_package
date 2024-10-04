@@ -22,6 +22,9 @@ void createModel() {
   createDirectory("lib/model");
   createFile("lib/model/pair.dart", pair);
   createFile("lib/model/screen_model.dart", screenModel);
+  createFile("lib/model/base_model.dart", baseModel);
+  createFile("lib/model/pagination_model.dart", paginationModel);
+  createFile("lib/model/error_model.dart", errorModel);
 }
 
 void createUtil() {
@@ -138,6 +141,114 @@ class RoutePage {
   static Map<String, WidgetBuilder> routeList = {
     RoutePage.splash: (_) => const Scaffold(),
   };
+}
+''';
+
+var baseModel = '''
+import 'pagination_model.dart';
+
+class BaseModel {
+  Map<String, dynamic> data;
+  List<dynamic> dataList;
+  PaginationModel paginationModel;
+
+  BaseModel(this.data, this.dataList, this.paginationModel);
+
+  factory BaseModel.fromJson(Map<String, dynamic> data) {
+    var tempData = <String, dynamic>{};
+    var tempDataList = [];
+    if (data["data"] is Map<String, dynamic>) {
+      tempData = data["data"];
+    } else if(data["data"] is Iterable){
+      tempDataList = data["data"];
+    }
+    return BaseModel(
+      tempData,
+      tempDataList,
+      data["pagination"] == null
+          ? PaginationModel.zero()
+          : PaginationModel.fromJson(data["pagination"]),
+    );
+  }
+
+  @override
+  String toString() {
+    return 'BaseModel{data: \$data, dataList: \$dataList, paginationModel: \$paginationModel}';
+  }
+}
+''';
+
+var paginationModel = '''
+class PaginationModel {
+  int totalCount;
+  int totalPageNumber;
+  int currentPageNumber;
+
+  PaginationModel(this.totalCount, this.totalPageNumber, this.currentPageNumber);
+
+  PaginationModel.zero({
+    this.totalCount = 0,
+    this.totalPageNumber = 0,
+    this.currentPageNumber = 0,
+  });
+
+  factory PaginationModel.fromJson(Map<String, dynamic> data) {
+    return PaginationModel(
+      data["totalCount"] ?? 0,
+      data["totalPageNumber"] ?? 0,
+      data["currentPageNumber"] ?? 0,
+    );
+  }
+
+  @override
+  String toString() {
+    return 'PaginationModel{totalCount: \$totalCount, totalPageNumber: \$totalPageNumber, currentPageNumber: \$currentPageNumber}';
+  }
+}
+''';
+
+var errorModel = '''
+class ErrorModel {
+  final String method;
+  final int statusCode;
+  final String title;
+  final String message;
+  final String url;
+  final dynamic error;
+
+  ErrorModel({
+    this.method = "",
+    this.statusCode = 0,
+    this.title = "",
+    this.message = "",
+    this.url = "",
+    this.error = "",
+  });
+
+  factory ErrorModel.fromMap(Map<String, dynamic> data) {
+    return ErrorModel(
+      title: data["title"],
+      error: data,
+      message: data["message"],
+      url: data["url"],
+      method: data["method"],
+      statusCode: data["statusCode"],
+    );
+  }
+
+  Map<String, dynamic> toMap() => {
+        "method": method,
+        "statusCode": statusCode,
+        "title": title,
+        "message": message,
+        "url": url,
+        "error": error,
+      };
+
+  @override
+  String toString() {
+    return 'ErrorModel{method: \$method, statusCode: \$statusCode, title: \$title, message: \$message, url: \$url, error: \$error}';
+  }
 }
 ''';
 
@@ -819,7 +930,6 @@ class DateUtil{
 ''';
 
 var errorUtil = '''
-import 'package:flutter/widgets.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 
 class ErrorUtil {
@@ -831,20 +941,17 @@ class ErrorUtil {
   }
 
   static void throwError(Map<String, dynamic> e) {
-   try{
-     throw {
-       "method": e["method"],
-       "statusCode": e["statusCode"],
-       "title": e["title"],
-       "message": e["message"],
-       "url": e["url"],
-       "error": e["error"],
-     };
-   }catch(e) {
-     debugPrint(e.toString());
-   }
+    throw {
+      "method": e["method"],
+      "statusCode": e["statusCode"],
+      "title": e["title"],
+      "message": e["message"],
+      "url": e["url"],
+      "error": e["error"],
+    };
   }
 }
+
 ''';
 
 var keyboardUtil = '''
@@ -856,6 +963,7 @@ class KeyboardUtil {
   }
 }
 ''';
+
 
 var loading = '''
 import 'package:flutter/material.dart';
@@ -982,7 +1090,7 @@ var baseApi = '''
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 
-import '../utils/logging.dart';
+import '../util/logging.dart';
 
 abstract class BaseApi {
   late final Dio _dio;
@@ -1320,6 +1428,7 @@ class Logging {
     }
   }
 }
+
 ''';
 
 var imageWidget = '''
