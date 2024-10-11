@@ -106,42 +106,65 @@ var routePage = '''
 import 'package:flutter/material.dart';
 
 class RoutePage {
-  /// 페이지 이동
+  static var routes = <String, Route?>{};
+
+  static const home = '/home';
+  static const route1 = '/route1';
+
+  static void _moveRoute(
+    BuildContext context,
+    String routeName,
+    Widget widget, {
+    Function(dynamic value)? callback,
+    VoidCallback? callbackWhen,
+  }) {
+    _removeRoute(routeName);
+    var route = MaterialPageRoute(
+      builder: (context) => widget,
+      settings: RouteSettings(name: routeName),
+    );
+    RoutePage.routes[routeName] = route;
+    Navigator.push(context, route)
+        .then((value) => callback?.call(value))
+        .whenComplete(() => callbackWhen?.call());
+  }
+
+  /// context의 위젯이 제거되면 StatefulElement#4fdf3(DEFUNCT)(no widget) 상태가 된다.
+  /// mounted 변수가 해당 위젯이 위젯 트리에 속해 있는지 아닌지 알려 준다.
+  static void _removeRoute(String routeName) {
+    var route = RoutePage.routes[routeName];
+    if (route == null) return;
+    if (route.navigator == null) return;
+    if (!route.navigator!.context.mounted) return;
+    Navigator.removeRoute(route.navigator!.context, route);
+    RoutePage.routes[routeName] = null;
+  }
+
+  /// 단순 페이지 이동
   static void move(
     BuildContext context,
-    String pageName, {
-    dynamic arguments,
+    String routeName,
+    Widget screen, {
     Function(dynamic value)? callback,
+    VoidCallback? callbackWhen,
   }) {
-    Navigator.of(context).pushNamed(pageName, arguments: arguments).then((value) {
-      callback?.call(value);
-    });
+    _moveRoute(context, routeName, screen, callback: callback, callbackWhen: callbackWhen);
   }
 
-  /// 현재 페이지를 새로운 페이지로 교환
-  static void moveAndReplace(
-    BuildContext context,
-    String pageName, {
-    dynamic arguments,
+  /// 특정 화면으로 이동하는 함수 설정
+  static void moveRoute1(
+    BuildContext context, {
     Function(dynamic value)? callback,
+    VoidCallback? callbackWhen,
   }) {
-    Navigator.of(context).pushReplacementNamed(pageName, arguments: arguments).then((value) {
-      callback?.call(value);
-    });
+    // _moveRoute(context, route1, const Route1Screen(),
+    //     callback: callback, callbackWhen: callbackWhen);
   }
 
-  /// 특정 페이지까지 되돌아가기
-  static void popUntil(BuildContext context, String pageName) {
-    Navigator.of(context).popUntil(
-      (route) => route.settings.name.toString() == pageName,
-    );
+  /// 특정 routeName까지 이동
+  static void popUntil(BuildContext context, String routeName) {
+    Navigator.popUntil(context, (route) => route.settings.name == routeName);
   }
-
-  static const splash = '/splash';
-
-  static Map<String, WidgetBuilder> routeList = {
-    RoutePage.splash: (_) => const Scaffold(),
-  };
 }
 ''';
 

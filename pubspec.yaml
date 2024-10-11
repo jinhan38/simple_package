@@ -1,6 +1,6 @@
 name: simple_package
 description: "Simple generation package"
-version: 0.0.12
+version: 0.0.14
 homepage: "https://github.com/jinhan38/simple_package"
 
 environment:
