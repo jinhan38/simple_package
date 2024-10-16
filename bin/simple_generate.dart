@@ -1180,7 +1180,7 @@ import 'package:flutter/material.dart';
 class Loading {
   static BuildContext? _context;
 
-  static open({required BuildContext context, int finishSec = 5}) async {
+  static open({required BuildContext context, int finishSec = 5, Widget? loadingWidget}) async {
     if (_context != null) return;
     _context = context;
     showDialog(
@@ -1188,10 +1188,13 @@ class Loading {
       barrierDismissible: false,
       barrierColor: Colors.transparent,
       builder: (context) {
-        return Material(
-          color: Colors.black.withOpacity(0.6),
-          elevation: 0,
-          child: widget(),
+        return PopScope(
+          canPop: false,
+          child: Material(
+            color: Colors.black.withOpacity(0.6),
+            elevation: 0,
+            child: loadingWidget ?? widget(),
+          ),
         );
       },
     ).timeout(Duration(seconds: finishSec), onTimeout: () async => close());
